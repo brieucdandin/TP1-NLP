@@ -25,11 +25,9 @@ def count_types(corpus):
     """
     Renvoie le nombre de types (mots distincts) dans le corpus
     """
-    vocab = set(corpus[0][0])
+    vocab = set()
     for sentence in corpus:
-#        print(type(sentence))
-#        print(type(vocab))
-        vocab | set(sentence)
+        vocab = vocab | set(sentence)
     return len(vocab)
 
 
@@ -99,7 +97,7 @@ if __name__ == "__main__":
         raw_data = f.read()
     corpus = pre.preprocessed_text(raw_data)[1]
 
-    nb_tokens = count_tokens(corpus)
-    print(nb_tokens)
+    # nb_tokens = count_tokens(corpus)
+    # print(nb_tokens)
     nb_types = count_types(corpus)
     print(nb_types)
