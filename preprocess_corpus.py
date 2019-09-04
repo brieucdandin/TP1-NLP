@@ -1,7 +1,7 @@
 """
 Questions 1.1.1 à 1.1.5 : prétraitement des données.
 """
-
+import nltk
 
 def segmentize(raw_text):
     """
@@ -14,7 +14,7 @@ def segmentize(raw_text):
     :param raw_text: str
     :return: list(str)
     """
-    pass
+    return nltk.sent_tokenize(raw_text)
 
 
 def tokenize(sentences):
@@ -32,7 +32,10 @@ def tokenize(sentences):
     :param sentences: list(str), une liste de phrases
     :return: list(list(str)), une liste de phrases tokenizées
     """
-    pass
+    res = []
+    for sentence in sentences:
+        res.append(nltk.word_tokenize(sentence))
+    return res
 
 
 def lemmatize(corpus):
@@ -42,7 +45,11 @@ def lemmatize(corpus):
     :param corpus: list(list(str)), une liste de phrases tokenizées
     :return: list(list(str)), une liste de phrases lemmatisées
     """
-    pass
+    res = []
+    lemmzer = nltk.WordNetLemmatizer()
+    for sentence in corpus:
+        res.append([lemmzer.lemmatize(token) for token in sentence])
+    return res
 
 
 def stem(corpus):
@@ -52,7 +59,11 @@ def stem(corpus):
     :param corpus: list(list(str)), une liste de phrases tokenizées
     :return: list(list(str)), une liste de phrases stemées
     """
-    pass
+    res = []
+    stemmer = nltk.PorterStemmer()
+    for sentence in corpus:
+        res.append([stemmer.stem(lemme) for lemme in sentence])
+    return res
 
 
 def read_and_preprocess(filename):
@@ -86,7 +97,18 @@ def test_preprocessing(raw_text, sentence_id=0):
     :return: un tuple (sentences, tokens, lemmas, stems) qui contient le résultat des quatre fonctions appliquées à
     tout le corpus
     """
-    pass
+    sentence = [segmentize(raw_text)[sentence_id]]
+    tokens = tokenize(sentence)
+    lemmas = lemmatize(tokens)
+    stems = stem(tokens)
+    return (sentence, tokens, lemmas, stems)
+
+def preprocessed_text(raw_data):
+    sentences = segmentize(raw_data)
+    tokens = tokenize(sentences)
+    lemmas = lemmatize(tokens)
+    stems = stem(tokens)
+    return (sentences, tokens, lemmas, stems)
 
 
 if __name__ == "__main__":
@@ -98,4 +120,29 @@ if __name__ == "__main__":
     python preprocess_corpus.py
     ```
     """
-    pass
+    with open("data/shakespeare_train.txt", "r") as f:
+        raw_data = f.read()
+
+    res_preprocessing = test_preprocessing(raw_data, 1)
+
+    with open("output/shakespeare_train_phrases.txt", "w") as f:
+        for phrase in res_preprocessing[0]:
+            f.write(phrase + "\n")
+
+    with open("output/shakespeare_train_mots.txt", "w") as f:
+        for phrase in res_preprocessing[1]:
+            for word in phrase:
+                f.write(word + " ")
+            f.write("\n")
+
+    with open("output/shakespeare_train_lemmes.txt", "w") as f:
+        for phrase in res_preprocessing[2]:
+            for lemme in phrase:
+                f.write(lemme + " ")
+            f.write("\n")
+
+    with open("output/shakespeare_train_stems.txt", "w") as f:
+        for phrase in res_preprocessing[3]:
+            for stem in phrase:
+                f.write(stem + " ")
+            f.write("\n")

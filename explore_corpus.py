@@ -15,14 +15,22 @@ def count_tokens(corpus):
     """
     Renvoie le nombre de mots dans le corpus
     """
-    pass
+    taille = 0
+    for sentence in corpus:
+        taille += len(sentence)
+    return taille
 
 
 def count_types(corpus):
     """
     Renvoie le nombre de types (mots distincts) dans le corpus
     """
-    pass
+    vocab = set(corpus[0][0])
+    for sentence in corpus:
+#        print(type(sentence))
+#        print(type(vocab))
+        vocab | set(sentence)
+    return len(vocab)
 
 
 def get_most_frequent(corpus, n):
@@ -87,4 +95,11 @@ if __name__ == "__main__":
     Nombre de types: 709
     ...
     """
-    pass
+    with open("data/shakespeare_train.txt", "r") as f:
+        raw_data = f.read()
+    corpus = pre.preprocessed_text(raw_data)[1]
+
+    nb_tokens = count_tokens(corpus)
+    print(nb_tokens)
+    nb_types = count_types(corpus)
+    print(nb_types)
