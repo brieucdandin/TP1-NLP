@@ -123,7 +123,8 @@ if __name__ == "__main__":
     with open("data/shakespeare_train.txt", "r") as f:
         raw_data = f.read()
 
-    res_preprocessing = test_preprocessing(raw_data, 1)
+    # res_preprocessing = test_preprocessing(raw_data, 1)
+    res_preprocessing = preprocessed_text(raw_data)
 
     with open("output/shakespeare_train_phrases.txt", "w") as f:
         for phrase in res_preprocessing[0]:
