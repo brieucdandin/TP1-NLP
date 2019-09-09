@@ -13,7 +13,8 @@ import preprocess_corpus as pre
 import nltk
 from nltk.lm.preprocessing import pad_both_ends
 from collections import defaultdict
-import numpy.random as npr
+import numpy as np
+np.set_printoptions(precision=10)
 
 
 def extract_ngrams_from_sentence(sentence, n):
@@ -161,7 +162,9 @@ class NgramModel(object):
         prob = []
         for word in self.vocab:
             prob.append(self.proba(word, context))
-        next = npr.choice(self.vocab, p=prob)
+        if sum(prob) == 0:
+            return "Le contexte n'existe pas."
+        next = np.random.choice(self.vocab, p=prob)
         return next
 
 
@@ -192,24 +195,21 @@ if __name__ == "__main__":
         1: [()],
         2: [("King",), ("I",), ("<s>",)],
         3: [("<s>", "<s>"), ("<s>", "I"), ("Something", "is"), ("To", "be"), ("O", "Romeo")]
+        # 3: [("<s>", "I"), ("Something", "is"), ("To", "be"), ("O", "Romeo")]
     }
 
     with open("data/shakespeare_train.txt", "r") as f:
        raw_data = f.read()
     corpus = pre.preprocessed_text(raw_data)[1]
 
-    # lm_1 = NgramModel(corpus, 1)
-    # lm_2 = NgramModel(corpus, 2)
-    # lm_3 = NgramModel(corpus, 3)
+    lm_1 = NgramModel(corpus, 1)
+    lm_2 = NgramModel(corpus, 2)
+    lm_3 = NgramModel(corpus, 3)
 
-    # lm = [lm_1, lm_2, lm_3]
+    lm = [lm_1, lm_2, lm_3]
 
-    # for i in range(2,4):
-    #     print("########### Test pour n = ", i, " ###########")
-    #     for context in contexts[i]:
-    #         print("Le mot qui suis le contexte ", context, " est :")
-    #         print(lm[i].predict_next(context))
-
-    # corpus = [["Alice", "est", "là"], ["Bob", "est", "ici"]]
-    # lm = NgramModel(corpus, 1)
-    # print(lm.counts)
+    for i in range(3):
+        print("########### Test pour n = ", i, " ###########")
+        for context in contexts[i+1]:
+            print("Le mot qui suis le contexte ", context, " est :")
+            print(lm[i].predict_next(context))
