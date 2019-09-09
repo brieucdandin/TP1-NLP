@@ -15,9 +15,14 @@ et une variable vocabulary de type `Vocabulary`.
 
 On peut ensuite entraîner le modèle avec la méthode `model.fit(ngrams)`
 """
+
+import nltk
+
 from nltk.lm.models import MLE, Laplace, Lidstone
 from nltk.lm.vocabulary import Vocabulary
 from nltk.lm.preprocessing import padded_everygram_pipeline
+
+import preprocess_corpus as pre
 
 
 def train_LM_model(corpus, model, n, gamma=None, unk_cutoff=2):
@@ -32,7 +37,28 @@ def train_LM_model(corpus, model, n, gamma=None, unk_cutoff=2):
     :param unk_cutoff: le seuil au-dessous duquel un mot est considéré comme inconnu et remplacé par <UNK>
     :return: un modèle entraîné
     """
-    pass
+    #On veut condenser le corpus en une simple liste, pour pouvoir utiliser facilement Vocabulary
+    flat_corpus = []
+    for l in corpus:
+        for w in l:
+            flat_corpus.append(w)
+    
+    vocab = Vocabulary(flat_corpus, unk_cutoff)
+    
+    ngram_corpus = []
+    for i in corpus:
+        ngram_corpus.append(nltk.ngrams(i,n))
+    
+    return model.fit (ngram_corpus, vocab)
+    
+    #if (model == MLE):
+    #    return 
+    #elif (model == Lidstone):
+    #    return model.fit(ngram_corpus, vocab)
+    #elif (model == Laplace):
+    #    return model.fit(ngram_corpus, vocab)
+    
+    
 
 
 def evaluate(model, corpus):
@@ -43,7 +69,7 @@ def evaluate(model, corpus):
     :param corpus: list(list(str)), une corpus tokenizé
     :return: float
     """
-    pass
+    
 
 
 def evaluate_gamma(gamma, train, test, n):
@@ -93,7 +119,7 @@ if __name__ == "__main__":
     Dans un premier temps, vous devez entraîner des modèles de langue MLE et Laplace pour n=1, 2, 3 à l'aide de la 
     fonction `train_MLE_model` sur le corpus `shakespeare_train` (question 1.4.2). Puis vous devrez évaluer vos modèles 
     en mesurant leur perplexité sur le corpus `shakespeare_test` (question 1.5.2).
-    
+
     2)
     Ensuite, on vous demande de tracer un graphe représentant le perplexité d'un modèle Lidstone en fonction du paramètre 
     gamma. Vous pourrez appeler la fonction `evaluate_gamma` (déjà écrite) sur `shakespeare_train` et `shakespeare_test` 
@@ -107,4 +133,34 @@ if __name__ == "__main__":
     Enfin, pour chaque n=1, 2, 3, vous devrez générer 2 segments de 20 mots pour des modèles MLE entraînés sur Trump.
     Réglez `unk_cutoff=1` pour éviter que le modèle ne génère des tokens <UNK> (question 1.6.2).
     """
-    pass
+    with open("data/shakespeare_train.txt", "r") as f:
+        raw_data_train = f.read()
+    
+    with open("data/shakespeare_test.txt", "r") as f:
+        raw_data_test = f.read()
+        
+    corpus_train = pre.preprocessed_text(raw_data_train)[1]
+    corpus_test = pre.preprocessed_text(raw_data_test)[1]
+    
+    # 1)
+    
+    # 3 modèles de MLE 
+    MLE_model_1 = train_LM_model(corpus_train,MLE(1),1)
+    MLE_model_2 = train_LM_model(corpus_train,MLE(2),2)
+    MLE_model_3 = train_LM_model(corpus_train,MLE(3),3)
+
+    # 3 modèles de Laplace
+    LP_model_1 = train_LM_model(corpus_train,Laplace(1),1)
+    LP_model_2 = train_LM_model(corpus_train,Laplace(2),2)
+    LP_model_3 = train_LM_model(corpus_train,Laplace(3),3)
+    
+    #liste contenant les scores de perplexite
+    score_perplexite_MLE = []
+    score_perplexite_LP = []
+    score_perplexite_Lid = []
+    
+    
+    for i in range (0,3):
+        evaluate()
+    
+    
