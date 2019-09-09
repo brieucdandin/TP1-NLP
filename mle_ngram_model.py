@@ -9,6 +9,11 @@ vous pourrez alors entraîner un modèle n-gramme sur un corpus avec la commande
 Sauf mention contraire, le paramètre `corpus` désigne une liste de phrases tokenizées
 """
 from itertools import chain
+import preprocess_corpus as pre
+import nltk
+from nltk.lm.preprocessing import pad_both_ends
+from collections import defaultdict
+import numpy.random as npr
 
 
 def extract_ngrams_from_sentence(sentence, n):
@@ -24,7 +29,12 @@ def extract_ngrams_from_sentence(sentence, n):
     :param n: int, l'ordre des n-grammes
     :return: list(tuple(str)), la liste des n-grammes présents dans `sentence`
     """
-    pass
+    padded_sentence = list(pad_both_ends(sentence, 2))
+    ngrams = nltk.ngrams(padded_sentence, n)
+    ngrams_list = []
+    for ngram in ngrams:
+        ngrams_list.append(ngram)
+    return(ngrams_list)
 
 
 def extract_ngrams(corpus, n):
@@ -41,7 +51,10 @@ def extract_ngrams(corpus, n):
     :param n: int, l'ordre des n-grammes
     :return: list(list(tuple(str))), la liste contenant les listes de n-grammes de chaque phrase
     """
-    pass
+    res = []
+    for sentence in corpus:
+        res.append(extract_ngrams_from_sentence(sentence, n))
+    return res
 
 
 def count_ngrams(corpus, n):
@@ -61,7 +74,32 @@ def count_ngrams(corpus, n):
     :param n: int, l'ordre de n-grammes
     :return: mapping(tuple(str)->mapping(str->int)), l'objet contenant les comptes de chaque n-gramme
     """
-    pass
+    all_ngrams = extract_ngrams(corpus, n)
+    res = defaultdict(lambda: 0)
+    if n == 1:
+        res[()] = defaultdict(lambda: 0)
+        for sentence in all_ngrams:
+            for unigram in sentence:
+                if unigram[0] in res[()]:
+                    res[()][unigram[0]] += 1
+                else:
+                    res[()][unigram[0]] = 1
+    else:
+        for sentence in all_ngrams:
+            for ngram in sentence:
+                context = ngram[:n-1]
+                word = ngram[n-1]
+                if context in res:
+                    if word in context:
+                        res[context][word] += 1
+                    else:
+                        res[context][word] = 1
+                else:
+                    res[context] = defaultdict(lambda: 0)
+                    res[context][word] = 1
+    return res
+
+
 
 def compute_MLE(counts):
     """
@@ -76,7 +114,15 @@ def compute_MLE(counts):
     :param counts: mapping(tuple(str)->mapping(str->int))
     :return: mapping(tuple(str)->mapping(str->float))
     """
-    pass
+    res = counts.copy()
+    if () in res:
+        del res[()]["<s>"]
+    for context in res.keys():
+        tot = sum(res[context].values())
+        for word in res[context].keys():
+            res[context][word] /= tot
+    return res
+
 
 
 class NgramModel(object):
@@ -111,7 +157,12 @@ class NgramModel(object):
         :param context: tuple(str), un (n-1)-gramme de contexte
         :return: str
         """
-        pass
+        # Comment on gère <s> et </s>
+        prob = []
+        for word in self.vocab:
+            prob.append(self.proba(word, context))
+        next = npr.choice(self.vocab, p=prob)
+        return next
 
 
 if __name__ == "__main__":
@@ -142,3 +193,23 @@ if __name__ == "__main__":
         2: [("King",), ("I",), ("<s>",)],
         3: [("<s>", "<s>"), ("<s>", "I"), ("Something", "is"), ("To", "be"), ("O", "Romeo")]
     }
+
+    with open("data/shakespeare_train.txt", "r") as f:
+       raw_data = f.read()
+    corpus = pre.preprocessed_text(raw_data)[1]
+
+    # lm_1 = NgramModel(corpus, 1)
+    # lm_2 = NgramModel(corpus, 2)
+    # lm_3 = NgramModel(corpus, 3)
+
+    # lm = [lm_1, lm_2, lm_3]
+
+    # for i in range(2,4):
+    #     print("########### Test pour n = ", i, " ###########")
+    #     for context in contexts[i]:
+    #         print("Le mot qui suis le contexte ", context, " est :")
+    #         print(lm[i].predict_next(context))
+
+    # corpus = [["Alice", "est", "là"], ["Bob", "est", "ici"]]
+    # lm = NgramModel(corpus, 1)
+    # print(lm.counts)
