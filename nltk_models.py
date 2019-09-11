@@ -16,13 +16,16 @@ et une variable vocabulary de type `Vocabulary`.
 On peut ensuite entraîner le modèle avec la méthode `model.fit(ngrams)`
 """
 
-import nltk
+import nltk.lm
+import numpy
+import matplotlib.pyplot as plt
 
 from nltk.lm.models import MLE, Laplace, Lidstone
 from nltk.lm.vocabulary import Vocabulary
 from nltk.lm.preprocessing import padded_everygram_pipeline
 
 import preprocess_corpus as pre
+import mle_ngram_model as mnm
 
 
 def train_LM_model(corpus, model, n, gamma=None, unk_cutoff=2):
@@ -45,20 +48,21 @@ def train_LM_model(corpus, model, n, gamma=None, unk_cutoff=2):
     
     vocab = Vocabulary(flat_corpus, unk_cutoff)
     
-    ngram_corpus = []
-    for i in corpus:
-        ngram_corpus.append(nltk.ngrams(i,n))
+    ngram_corpus = mnm.extract_ngrams(corpus,n)
     
-    return model.fit (ngram_corpus, vocab)
+    if (model == MLE):
+        model_res = MLE(n)
+        model_res.fit(ngram_corpus, vocab)
     
-    #if (model == MLE):
-    #    return 
-    #elif (model == Lidstone):
-    #    return model.fit(ngram_corpus, vocab)
-    #elif (model == Laplace):
-    #    return model.fit(ngram_corpus, vocab)
+    if (model == Lidstone):
+        model_res = Lidstone(gamma,n)
+        model_res.fit(ngram_corpus, vocab)
     
+    if (model == Laplace):
+        model_res = Laplace(n)
+        model_res.fit(ngram_corpus, vocab)
     
+    return model_res
 
 
 def evaluate(model, corpus):
@@ -69,6 +73,12 @@ def evaluate(model, corpus):
     :param corpus: list(list(str)), une corpus tokenizé
     :return: float
     """
+    ngram_corpus_test = mnm.extract_ngrams(corpus,model.order)
+    res = 0
+    for i in range (0,len(ngram_corpus_test)):
+        res += model.perplexity(ngram_corpus_test[i])
+    return res/(len(ngram_corpus_test))
+    
     
 
 
@@ -145,14 +155,18 @@ if __name__ == "__main__":
     # 1)
     
     # 3 modèles de MLE 
-    MLE_model_1 = train_LM_model(corpus_train,MLE(1),1)
-    MLE_model_2 = train_LM_model(corpus_train,MLE(2),2)
-    MLE_model_3 = train_LM_model(corpus_train,MLE(3),3)
+    
+ 
+    MLE_model = []
+    MLE_model.append(train_LM_model(corpus_train,MLE,1))
+    MLE_model.append(train_LM_model(corpus_train,MLE,2))
+    MLE_model.append(train_LM_model(corpus_train,MLE,3))
 
     # 3 modèles de Laplace
-    LP_model_1 = train_LM_model(corpus_train,Laplace(1),1)
-    LP_model_2 = train_LM_model(corpus_train,Laplace(2),2)
-    LP_model_3 = train_LM_model(corpus_train,Laplace(3),3)
+    LP_model = []
+    LP_model.append(train_LM_model(corpus_train,Laplace,1))
+    LP_model.append(train_LM_model(corpus_train,Laplace,2))
+    LP_model.append(train_LM_model(corpus_train,Laplace,3))
     
     #liste contenant les scores de perplexite
     score_perplexite_MLE = []
@@ -161,6 +175,35 @@ if __name__ == "__main__":
     
     
     for i in range (0,3):
-        evaluate()
+        score_perplexite_MLE.append(evaluate(MLE_model[i], corpus_test))
+        score_perplexite_LP.append(evaluate(LP_model[i], corpus_test))
+    
+    # Cohérent d'avoir une perplexité infini pour les ordres 2 et 3, car le produit des 1/P(wi|w1...wi-1)=+inf si un des P(wi|w1...wi-1)=0 , or certains 2-gram et 3-gram n'apparaissent pas dans le corpus de texte
+    # Perplexité moyenne par phrase.
+    print (score_perplexite_MLE)
+    print (score_perplexite_LP)
+    
+    # 2)
+    
+    val_X = numpy.logspace(-5,0,10)
+    val_y_1 = [evaluate_gamma(x,corpus_train,corpus_test,1) for x in val_X]
+    val_y_2 = [evaluate_gamma(x,corpus_train,corpus_test,2) for x in val_X]
+    val_y_3 = [evaluate_gamma(x,corpus_train,corpus_test,3) for x in val_X]
+    
+    plt.plot (val_X, val_y_1)
+    plt.show()
+    plt.plot (val_X, val_y_2)
+    plt.show
+    plt.plot (val_X, val_y_3)
+    plt.show()
+
+    
+    
+    
+
+
+    
+    
+    
     
     
