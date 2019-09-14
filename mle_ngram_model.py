@@ -211,5 +211,5 @@ if __name__ == "__main__":
     for i in range(3):
         print("########### Test pour n = ", i, " ###########")
         for context in contexts[i+1]:
-            print("Le mot qui suis le contexte ", context, " est :")
+            print("Le mot qui suit le contexte ", context, " est :")
             print(lm[i].predict_next(context))
