@@ -32,19 +32,18 @@ def train_MLE_model(corpus, n):
     :param n: l'ordre du modèle
     :return: un modèle entraîné
     """
-    print("Boucle d'ordre", n, "DEBUT\n")
     # Creation of the vocabulary from the given corpus
     flat_corpus = []
     for document in corpus:
         for word in document:
             flat_corpus.append(word)
-    vocab = Vocabulary(flat_corpus)
+    vocab = Vocabulary(flat_corpus, unk_cutoff=2)
     # Extraction of the n-grams
     n_grams = mnm.extract_ngrams(corpus, n)
     # Creation and training of the model on the corpus
     model = MLE(n, vocab)
     model.fit(n_grams)
-    print("Boucle d'ordre", n, "FIN\n")
+    print("Modèle d'ordre", n, "généré par nltk.lm")
     return model
 
 
@@ -61,7 +60,38 @@ def compare_models(your_model, nltk_model, corpus, n):
     :param corpus: list(list(str)), une liste de phrases tokenizées à tester
     :return: float, la proportion de n-grammes incorrects
     """
-    print("Les modèles d'ordre", n, "ont bien été générés. On peut les comparer.")
+    print("Les modèles d'ordre", n, "ont bien été générés. Début de la comparaison.")
+    total_ngrams_nmb = 0
+    wrong_ngrams_nmb = 0
+    # List of possible contexts for n=1,2,3
+    context = [ (), (corpus[0][0]), (corpus[0][0], corpus[0][1]) ]
+    # Buffer for the first word of a trigram's context
+    word_buffer = ''
+    # List of incorrect n-grams
+    wrong_ngrams_list = []
+    # With n >= 2, testing the first n-1 words isn't useful (both model will return a probability of 0).
+    # But these iterations enable to fill the context for the ones which follow accordingly.
+    for document in corpus:
+        for word in document:
+            # Update both counts
+            total_ngrams_nmb += 1
+            # print("your_model.score(", word, ",", context[n-1], ") =", your_model.score(word, context[n-1]), "\t\tnltk_model.score(", word, ",", context[n-1], ") =", nltk_model.score(word, context[n-1]))
+            if your_model.score(word, context[n-1]) != nltk_model.score(word, context[n-1]):
+                wrong_ngrams_nmb += 1
+                wrong_ngrams_list.append([word, context[n-1]])
+            # Update the context used during the next iteration
+            context[1] = word
+            context[2] = (word_buffer, word)
+            # Save this iteration's explored word for the iteration after the next one
+            word_buffer = word
+
+    print("Comparaison à l'ordre", n, "finie.")
+    if wrong_ngrams_nmb/total_ngrams_nmb == 0:
+        print("Les modèles coïncident.")
+    else:
+        print("Les modèles ne coïncident pas. Liste des n-grammes dont les probabilités diffèrent :")
+        print('\t\t'.join(map(str, wrong_ngrams_list)))
+    return wrong_ngrams_nmb/total_ngrams_nmb
 
 
 if __name__ == "__main__":
@@ -75,6 +105,7 @@ if __name__ == "__main__":
        raw_data = f.read()
     # Corpus tokenisé
     corpus = pre.preprocessed_text(raw_data)[1]
+
     # Entrainement MLE avec n = 1, 2, 3
     lm_1 = train_MLE_model(corpus, 1)
     lm_2 = train_MLE_model(corpus, 2)
