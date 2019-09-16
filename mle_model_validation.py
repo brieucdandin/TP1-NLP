@@ -60,7 +60,6 @@ def compare_models(your_model, nltk_model, corpus, n):
     :param corpus: list(list(str)), une liste de phrases tokenizées à tester
     :return: float, la proportion de n-grammes incorrects
     """
-    print("Les modèles d'ordre", n, "ont bien été générés. Début de la comparaison.")
     total_ngrams_nmb = 0
     wrong_ngrams_nmb = 0
     # List of possible contexts for n=1,2,3
@@ -75,6 +74,7 @@ def compare_models(your_model, nltk_model, corpus, n):
         for word in document:
             # Update both counts
             total_ngrams_nmb += 1
+            # To print all n-grams and their probabilities
             # print("your_model.score(", word, ",", context[n-1], ") =", your_model.score(word, context[n-1]), "\t\tnltk_model.score(", word, ",", context[n-1], ") =", nltk_model.score(word, context[n-1]))
             if your_model.score(word, context[n-1]) != nltk_model.score(word, context[n-1]):
                 wrong_ngrams_nmb += 1
@@ -85,11 +85,8 @@ def compare_models(your_model, nltk_model, corpus, n):
             # Save this iteration's explored word for the iteration after the next one
             word_buffer = word
 
-    print("Comparaison à l'ordre", n, "finie.")
-    if wrong_ngrams_nmb/total_ngrams_nmb == 0:
-        print("Les modèles coïncident.")
-    else:
-        print("Les modèles ne coïncident pas. Liste des n-grammes dont les probabilités diffèrent :")
+    print("Comparaison à l'ordre", n, "finie : les modèles", ("coïncident." if wrong_ngrams_nmb/total_ngrams_nmb == 0 else "ne coïncident pas. Liste des n-grammes dont les probabilités diffèrent :"))
+    if wrong_ngrams_nmb/total_ngrams_nmb != 0:
         print('\t\t'.join(map(str, wrong_ngrams_list)))
     return wrong_ngrams_nmb/total_ngrams_nmb
 
