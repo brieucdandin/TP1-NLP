@@ -14,7 +14,6 @@ import nltk
 from nltk.lm.preprocessing import pad_both_ends
 from collections import defaultdict
 import numpy as np
-np.set_printoptions(precision=10)
 
 
 def extract_ngrams_from_sentence(sentence, n):

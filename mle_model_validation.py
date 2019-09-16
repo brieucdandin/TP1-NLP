@@ -13,9 +13,11 @@ et une variable vocabulary de type Vocabulary.
 On peut ensuite entraîner le modèle avec la méthode model.fit(ngrams). Attention, la documentation prête à confusion :
 la méthode attends une liste de liste de n-grammes (`list(list(tuple(str)))` et non pas `list(list(str))`).
 """
-from nltk.lm.models import MLE
-from nltk.lm.vocabulary import Vocabulary
+import preprocess_corpus as pre
+import nltk
 from nltk.lm.preprocessing import padded_everygram_pipeline
+from nltk.lm.vocabulary import Vocabulary
+import 
 
 
 def train_MLE_model(corpus, n):
@@ -26,7 +28,11 @@ def train_MLE_model(corpus, n):
     :param n: l'ordre du modèle
     :return: un modèle entraîné
     """
-    pass
+    ngrams, words = padded_everygram_pipeline(n, corpus)
+    vocab = Vocabulary(words, unk_cutoff=2)
+    model = nltk.lm.models.MLE(n, vocab)
+    model.fit(ngrams)
+    return model
 
 
 def compare_models(your_model, nltk_model, corpus, n):
@@ -42,7 +48,27 @@ def compare_models(your_model, nltk_model, corpus, n):
     :param corpus: list(list(str)), une liste de phrases tokenizées à tester
     :return: float, la proportion de n-grammes incorrects
     """
-    pass
+    ngrams, words = padded_everygram_pipeline(n, corpus)
+    ngrams_list = []
+    for ngram in ngrams:
+        ngrams_list.append(ngram)
+    words_list = []
+    for word in words:
+        words_list.append(word)
+
+    nb_ngram = len(ngrams_list)
+    nb_ngram_diff = 0
+    for ngram in ngrams_list:
+        word = ngram[-1]
+        if n == 1:
+            context = ()
+        else:
+            context = ngram[:n-1]
+        if nltk_model.score(word, context) != your_model.proba(word, context):
+            print("Probabilités différentes pour le ngram : ", ngram)
+            print("proba nltk : ", nltk_model.score(word, context), "     notre proba : ", your_model.proba(word, context), "\n")
+            nb_ngram_diff += 1
+    return(nb_ngram_diff/nb_ngram)
 
 
 if __name__ == "__main__":
@@ -52,4 +78,9 @@ if __name__ == "__main__":
     `compare_models `pour vérifier qu'ils donnent les mêmes résultats. 
     Comme corpus de test, vous choisirez aléatoirement 50 phrases dans `shakespeare_train`.
     """
-    pass
+
+    with open("data/shakespeare_train.txt", "r") as f:
+       raw_data = f.read()
+    corpus = pre.preprocessed_text(raw_data)[1]
+
+    lm = train_MLE_model(corpus, 2)
