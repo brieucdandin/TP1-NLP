@@ -47,7 +47,6 @@ def train_LM_model(corpus, model, n, gamma=None, unk_cutoff=2):
             flat_corpus.append(w)
     
     vocab = Vocabulary(flat_corpus, unk_cutoff)
-    print(unk_cutoff)        
     
     ngram_corpus = mnm.extract_ngrams(corpus,n)
     
@@ -134,8 +133,8 @@ def generate(model, n_words, text_seed=None, random_seed=None):
         word = model.generate( 1, contexte_courant, random_seed)
         while (word=="#" or word=="@"):
             word = word + model.generate( 1, tuple(list(contexte_courant) + list(word)), random_seed)
-        # On ne veut pas conserver les URL puisqu'elles n'apportent pas d'information sémantique
-        while (word == "__URL__"):
+        # On ne veut pas conserver certains symboles inutiles puisqu'ils n'apportent pas d'information sémantique
+        while (word == "__URL__" or word == "<UNK>"):
             word = model.generate( 1, contexte_courant, random_seed)
         # On veut tenir à jour le contexte
         contexte_courant = list(contexte_courant)
@@ -144,7 +143,7 @@ def generate(model, n_words, text_seed=None, random_seed=None):
         res.append(word)
         # On doit séparer le cas où l'on génère une nouvelle phrase
         if (word == "." or word == "!"):
-            contexte_courant = tuple(["<s>"]*(model.order-1))
+           contexte_courant = tuple(["<s>"]*(model.order-1))
 
     # Conversion en une string
     text_res = " ".join(res)
