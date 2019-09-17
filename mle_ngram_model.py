@@ -88,10 +88,10 @@ def count_ngrams(corpus, n):
     else:
         for sentence in all_ngrams:
             for ngram in sentence:
-                context = ngram[:n-1]
+                context = tuple(ngram[:n-1])
                 word = ngram[n-1]
                 if context in res:
-                    if word in context:
+                    if word in res[context]:
                         res[context][word] += 1
                     else:
                         res[context][word] = 1
@@ -116,8 +116,6 @@ def compute_MLE(counts):
     :return: mapping(tuple(str)->mapping(str->float))
     """
     res = counts.copy()
-    if () in res:
-        del res[()]["<s>"]
     for context in res.keys():
         tot = sum(res[context].values())
         for word in res[context].keys():
@@ -195,7 +193,6 @@ if __name__ == "__main__":
         1: [()],
         2: [("King",), ("I",), ("<s>",)],
         3: [("<s>", "<s>"), ("<s>", "I"), ("Something", "is"), ("To", "be"), ("O", "Romeo")]
-        # 3: [("<s>", "I"), ("Something", "is"), ("To", "be"), ("O", "Romeo")]
     }
 
     with open("data/shakespeare_train.txt", "r") as f:
@@ -208,6 +205,23 @@ if __name__ == "__main__":
 
     lm = [lm_1, lm_2, lm_3]
 
+    nb_ngrams_1 = count_ngrams(corpus, 1)
+    nb_ngrams_2 = count_ngrams(corpus, 2)
+    nb_ngrams_3 = count_ngrams(corpus, 3)
+
+    nb_ngrams = [nb_ngrams_1, nb_ngrams_2, nb_ngrams_3]
+
+    # Cette partie affiche les 20 n-grammes les plus fréquents pour n = 1, 2, 3
+    for i in range(0,3):
+        print("#### Les 20 n-grammes les plus fréquents sont ####")
+        print("n = ", i+1)
+        res = []
+        for context in nb_ngrams[i].keys():
+            for word, freq in nb_ngrams[i][context].items():
+                res.append((context, word, freq))
+        print(sorted(res, key=lambda t: t[2], reverse=True)[:20])
+
+    # Prédiction du mot suivant chaque context
     for i in range(3):
         print("########### Test pour n = ", i, " ###########")
         for context in contexts[i+1]:
