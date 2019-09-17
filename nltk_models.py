@@ -47,6 +47,7 @@ def train_LM_model(corpus, model, n, gamma=None, unk_cutoff=2):
             flat_corpus.append(w)
     
     vocab = Vocabulary(flat_corpus, unk_cutoff)
+    print(unk_cutoff)        
     
     ngram_corpus = mnm.extract_ngrams(corpus,n)
     
@@ -73,6 +74,7 @@ def evaluate(model, corpus):
     :param corpus: list(list(str)), une corpus tokenizé
     :return: float
     """
+    # On va renvoyer la perplexité moyenne par phrase du corpus
     ngram_corpus_test = mnm.extract_ngrams(corpus,model.order)
     res = 0
     for i in range (0,len(ngram_corpus_test)):
@@ -117,8 +119,36 @@ def generate(model, n_words, text_seed=None, random_seed=None):
     :param random_seed: int, la seed à passer à la méthode `model.generate` pour pouvoir reproduire les résultats. Pour
     ne pas fixer de seed, il suffit de laisser `random_seed=None`
     :return: str
-    """
-    pass
+    """   
+    
+    res = []
+
+    # On veut connaitre le contexte courant.
+    contexte_courant = []
+    if (text_seed == None): 
+        contexte_courant = tuple(["<s>"]*(model.order-1))
+    else:
+        contexte_courant = text_seed
+    
+    while (len(res) < n_words):
+        word = model.generate( 1, contexte_courant, random_seed)
+        while (word=="#" or word=="@"):
+            word = word + model.generate( 1, tuple(list(contexte_courant) + list(word)), random_seed)
+        # On ne veut pas conserver les URL puisqu'elles n'apportent pas d'information sémantique
+        while (word == "__URL__"):
+            word = model.generate( 1, contexte_courant, random_seed)
+        # On veut tenir à jour le contexte
+        contexte_courant = list(contexte_courant)
+        contexte_courant.append(word)
+        contexte_courant = tuple(contexte_courant)
+        res.append(word)
+        # On doit séparer le cas où l'on génère une nouvelle phrase
+        if (word == "." or word == "!"):
+            contexte_courant = tuple(["<s>"]*(model.order-1))
+
+    # Conversion en une string
+    text_res = " ".join(res)
+    return text_res
 
 
 if __name__ == "__main__":
@@ -149,8 +179,12 @@ if __name__ == "__main__":
     with open("data/shakespeare_test.txt", "r") as f:
         raw_data_test = f.read()
         
+    with open("data/trump.txt", "r") as f:
+        raw_data_trump = f.read()
+        
     corpus_train = pre.preprocessed_text(raw_data_train)[1]
     corpus_test = pre.preprocessed_text(raw_data_test)[1]
+    corpus_trump = pre.preprocessed_text(raw_data_trump)[1]
     
     # 1)
     
@@ -193,12 +227,28 @@ if __name__ == "__main__":
     plt.plot (val_X, val_y_1)
     plt.show()
     plt.plot (val_X, val_y_2)
-    plt.show
+    plt.show()
     plt.plot (val_X, val_y_3)
     plt.show()
 
+    #1.6)
+
+    # 2)
+    # Génération du texte trump
+    MLE_model_trump = []
+    MLE_model_trump.append(train_LM_model(corpus_trump,MLE,1,unk_cutoff=1))
+    MLE_model_trump.append(train_LM_model(corpus_trump,MLE,2,unk_cutoff=1))
+    MLE_model_trump.append(train_LM_model(corpus_trump,MLE,3,unk_cutoff=1))
     
+    text_trump = []
+        
+    text_trump.append(generate(MLE_model_trump[0], 20))
+    text_trump.append(generate(MLE_model_trump[1], 20))
+    text_trump.append(generate(MLE_model_trump[2], 20))
     
+    for s in text_trump:
+        print(s)
+        print ("\n")
     
 
 

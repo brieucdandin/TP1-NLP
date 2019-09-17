@@ -30,7 +30,7 @@ def extract_ngrams_from_sentence(sentence, n):
     :param n: int, l'ordre des n-grammes
     :return: list(tuple(str)), la liste des n-grammes présents dans `sentence`
     """
-    padded_sentence = list(pad_both_ends(sentence, 2))
+    padded_sentence = list(pad_both_ends(sentence, n))
     ngrams = nltk.ngrams(padded_sentence, n)
     ngrams_list = []
     for ngram in ngrams:
